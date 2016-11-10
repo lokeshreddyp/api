@@ -1,58 +1,29 @@
-var mongoose = require('mongoose');
-
-mongoose.Promise = global.Promise;
-
-mongoose.connect('mongodb://localhost:27017/TodoApp');
-
-// var Todo = mongoose.model('Todo' , {
-//
-// text:{
-// type: String
-// },
-// completed: {
-// type: Boolean
-// },
-// completedAt: {
-//   type:Number
-// }
-// });
-//
-// var otherTodo = new Todo ({
-//   text: 'Dinner Cooked' ,
-//   completed : true ,
-//   completedAt : 12345
-//
-// });
-//
-//
-// otherTodo.save().then((docs) =>{
-//
-//   console.log('hehe' ,docs);
-//
-// },
-//
-//  (e) => {
-//    console.log('error occured' , e);
-//  }
-// );
+var express = require('express');
+var bodyparser = require('body-parser');
 
 
-var User  = mongoose.model('User' , {
-  email : {
-    required : true,
-    trim : true,
-    type: String,
-    minlength : 1
-  }
+var {mongoose} = require('./db/mongoose.js');
+var {User} = require('./models/user.js');
+var {Todo} = require('./models/todo.js');
+
+
+var app = express();
+app.use(bodyparser.json());
+app.post('/todos' , (req,res) => {
+  // console.log(req.body);
+
+  var todo = new Todo ({
+    text : req.body.text
+  });
+
+
+todo.save().then((doc) => {
+  res.send(doc);
+}, (e) => {
+  res.status(400).send(e);
+});
 });
 
-var NewUser = new User( {
-  email : ' lokesh@gmail.com '
+app.listen(3000 , () => {
+  console.log("Serve is rnning on port 3000");
 })
-
-NewUser.save().then ( (Userdoc) => {
-console.log("New  user object created" , Userdoc);
-},
-(e) => {
-console.log("Error caught",e);
-});
