@@ -1,6 +1,6 @@
 var mongoose  = require('mongoose');
-// mongoose.Promise = global.Promise;
-
+ // mongoose.Promise = global.Promise;
+// mongoose.Promise = require('bluebird');
 var Todo = mongoose.model('Todo' , {
 
 text:{
