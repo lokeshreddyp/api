@@ -31,9 +31,42 @@ Todo.find().then((doc)=> {
 }, (e) => {
   res.status(400).send(e);
 });
-
-
 });
+app.get('/todos/:id' ,(req,res)=> {
+  // var test = req.params.id;
+  // console.log("your id is",test);
+
+var getid = req.params.id;
+  // res.send(req.params);
+  // console.log(req.params.id);
+  Todo.findById(getid).then((doc)=> {
+    if(!doc) {
+      console.log("document not found");
+    }
+  res.send({doc});
+  },(e) => {
+res.status(404).send();
+  })
+});
+
+
+// app.get('/todos/:texttodo' ,(req,res)=> {
+//   // var test = req.params.id;
+//   // console.log("your id is",test);
+//
+// var texttodo = req.params.texttodo;
+//   // res.send(req.params);
+//   // console.log(req.params.id);
+//   Todo.find({getid:texttodo}).then((doc)=> {
+//     if(!doc) {
+//       console.log("document not found");
+//     }
+//   res.send({doc});
+//   },(e) => {
+// res.status(404).send();
+//   })
+// });
+
 
 
 app.listen(3000 , () => {
