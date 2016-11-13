@@ -8,7 +8,7 @@ const {mongoose} = require("./../db/mongoose");
 var id = '6824b667e37f392010d906dd';
 
 
-find query using promises
+//find query using promises
 Todo.find({
   text : "first data entered postman"
 }).then((doc)=> {
