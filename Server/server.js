@@ -1,4 +1,5 @@
 var express = require('express');
+var _ = require('lodash');
 var bodyparser = require('body-parser');
 var {mongoose} = require('./db/mongoose.js');
 var {User} = require('./models/user.js');
@@ -16,7 +17,7 @@ app.post('/todos' , (req,res) => {
   var todo = new Todo ({
     text : req.body.text
   });
-  
+
 todo.save().then((doc) => {
   res.send(doc);
 }, (e) => {
@@ -97,6 +98,38 @@ return  console.log('deletd document' , doc);
   console.log('Opps got an error for find one query',e);
   });
 });
+
+//express route for update query
+app.patch('/todos/update/:id' , (req,res)=> {
+  console.log("inside update method");
+var getid = req.params.id;
+var body = _.pick(req.body,['text','completed']);
+
+
+
+if(_.isBoolean(body.completed) && body.completed) {
+body.completedAt = new Date().getTime();
+}
+else {
+  body.completed = false;
+  body.completedAt = null;
+}
+
+Todo.findByIdAndUpdate(getid , {$set : body} , {new : true}).then((doc)=> {
+if(!doc) {
+  return res.status(404).send();
+}
+  // console.log('updated',doc);
+res.send({doc});
+console.log('updated',doc);
+// console.log(res.send({doc}));
+}).catch((e)=> {
+res.status(400).send(e);
+})
+});
+
+
+
 
 
 app.listen(port,() => {
