@@ -5,7 +5,7 @@ const {mongoose} = require("./../db/mongoose");
 
 
 
-var id = '6824b667e37f392010d906dd';
+var id = '58267d0beb3e0ac86b612ec5';
 
 
 //find query using promises
@@ -19,11 +19,19 @@ Todo.find({
 );
 
 Todo.findOne({_id:id}).then((doc) => {
-_id : id
+
 console.log('Find one query' , doc);
 },(e) => {
 console.log('Opps got an error for find one query',e);
 });
+
+Todo.findByIdAndRemove(id).then((doc) => {
+
+console.log('deletd document' , doc);
+},(e) => {
+console.log('Opps got an error for find one query',e);
+});
+
 
 User.findById(id).then((doc)=> {
 if(!doc) {
