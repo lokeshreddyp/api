@@ -1,3 +1,10 @@
+
+var env = process.env.NODE_ENV;
+
+// production -- run app on heroku
+// development -- run app locally
+// test -- testing the app
+
 var express = require('express');
 var _ = require('lodash');
 var bodyparser = require('body-parser');
@@ -24,6 +31,8 @@ todo.save().then((doc) => {
   res.status(400).send(e);
 });
 });
+
+
 
 //Todo express route get method
 app.get('/todos' ,(req,res) => {
@@ -131,6 +140,32 @@ res.status(400).send(e);
 });
 
 
+
+
+//User post method
+
+app.post('/users' , (req,res) => {
+var  body   = _.pick(req.body , ['email' , 'password']);
+var user = new User(body);
+user.save().then((user) => {
+  return user.generateAuthToken();
+  //res.send(user);
+}).then((token) => {
+res.header('x-auth' ,token).send(user);
+}),((e) => {
+  res.status(400).send(e);
+});
+});
+
+//User get method
+
+app.get('/users' , (req,res)=> {
+User.find().then((doc) => {
+res.send(doc);
+} , (e) => {
+  res.status(400).send(e);
+} );
+});
 
 
 
