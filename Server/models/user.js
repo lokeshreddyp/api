@@ -44,7 +44,7 @@ UserSchema.methods.toJSON = function() {
   var userObject  = user.toObject();
   return  _.pick(userObject , ['_id' , 'email']);
 };
-
+//for instance method
 UserSchema.methods.generateAuthToken = function() {
   var user = this;
   var access = 'auth';
@@ -54,6 +54,24 @@ UserSchema.methods.generateAuthToken = function() {
     return token;
   });
 };
+//for model methods .statics is used
+UserSchema.statics.findByToken = function(token) {
+  var User = this;
+  var decoded;
+
+  try {
+    decoded  = jwt.verify(token , 'abc123');
+  } catch(e) {
+
+return Promise.reject();
+  }
+
+  return User.findOne({
+    '_id' : decoded._id,
+    'tokens.access' : 'auth',
+    'tokens.token' : token
+  })
+}
 
 //made for User collection
 var User  = mongoose.model('User' , UserSchema);

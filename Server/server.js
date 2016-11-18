@@ -11,6 +11,7 @@ var bodyparser = require('body-parser');
 var {mongoose} = require('./db/mongoose.js');
 var {User} = require('./models/user.js');
 var {Todo} = require('./models/todo.js');
+var {authenticate} = require('./middleware/authenticate');
 
 
 var app = express();
@@ -147,8 +148,11 @@ res.status(400).send(e);
 app.post('/users' , (req,res) => {
 var  body   = _.pick(req.body , ['email' , 'password']);
 var user = new User(body);
+console.log("user is" , user);
 user.save().then((user) => {
+
   return user.generateAuthToken();
+
   //res.send(user);
 }).then((token) => {
 res.header('x-auth' ,token).send(user);
@@ -167,7 +171,10 @@ res.send(doc);
 } );
 });
 
-
+//express private route get
+app.get('/users/me' , authenticate , (req,res)=> {
+  res.send(req.user);
+});
 
 app.listen(port,() => {
   console.log('Serve is rnning on port' , port);
