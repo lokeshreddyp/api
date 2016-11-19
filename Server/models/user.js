@@ -2,6 +2,7 @@ const mongoose  = require('mongoose');
 const validator = require('validator');
 const jwt = require('jsonwebtoken');
 const _ = require('lodash');
+const bcrypt = require('bcryptjs');
 
 //Schema is used to add custom methods by using mongoose object
 var UserSchema = new mongoose.Schema({
@@ -38,12 +39,13 @@ required : true
   }]
 })
 
-
+//overriding user object to get only id and email as response to the user
 UserSchema.methods.toJSON = function() {
   var user = this;
   var userObject  = user.toObject();
   return  _.pick(userObject , ['_id' , 'email']);
 };
+
 //for instance method
 UserSchema.methods.generateAuthToken = function() {
   var user = this;
@@ -54,6 +56,7 @@ UserSchema.methods.generateAuthToken = function() {
     return token;
   });
 };
+
 //for model methods .statics is used
 UserSchema.statics.findByToken = function(token) {
   var User = this;
@@ -72,6 +75,27 @@ return Promise.reject();
     'tokens.token' : token
   })
 }
+
+//before adding to db we need to hash the password
+UserSchema.pre('save', function(next) {
+  // do stuff
+  var user = this;
+
+  if (user.isModified('password'))
+  {
+    bcrypt.genSalt(10, (err, salt) => {
+        bcrypt.hash(user.password, salt, (err, hash) => {
+            // Store hash in your password DB.
+            user.password = hash;
+
+            next();
+        });
+    });
+  }
+  else {
+//  next();
+  }
+});
 
 //made for User collection
 var User  = mongoose.model('User' , UserSchema);
