@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 
 const bcrypt = require('bcryptjs');
 
-var name  = "pushkarkanikicherla";
+var name  = "Lokeshreddy";
 
 //to hash the pasword by adding salt to get random set of password everytime.
 bcrypt.genSalt(10, function(err, salt) {
@@ -13,7 +13,6 @@ bcrypt.genSalt(10, function(err, salt) {
         console.log("hashed password is ",hash);
     });
 });
-
 var generatedpassword = "$2a$10$Z9DrNkEPA5LFdcVi/1D6YuXIEzbO4Z98xBwI7h9WiDFbbgmsVKEua";
 //verifying the hashing function..resturns true if both match
 bcrypt.compare("name", generatedpassword, function(err, res) {

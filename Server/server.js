@@ -1,5 +1,5 @@
 
-var env = process.env.NODE_ENV;
+require('./config/config');
 
 // production -- run app on heroku
 // development -- run app locally
@@ -8,6 +8,7 @@ var env = process.env.NODE_ENV;
 var express = require('express');
 var _ = require('lodash');
 var bodyparser = require('body-parser');
+// const {ObjectID} = require('mongodb');
 var {mongoose} = require('./db/mongoose.js');
 var {User} = require('./models/user.js');
 var {Todo} = require('./models/todo.js');
@@ -15,15 +16,16 @@ var {authenticate} = require('./middleware/authenticate');
 
 
 var app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT;
 app.use(bodyparser.json());
 
 //Todo post express route
-app.post('/todos' , (req,res) => {
+app.post('/todos' , authenticate,(req,res) => {
   // console.log(req.body);
 
   var todo = new Todo ({
-    text : req.body.text
+    text : req.body.text,
+    _createdid : req.user._id
   });
 
 todo.save().then((doc) => {
@@ -36,8 +38,8 @@ todo.save().then((doc) => {
 
 
 //Todo express route get method
-app.get('/todos' ,(req,res) => {
-Todo.find().then((doc)=> {
+app.get('/todos' ,authenticate,(req,res) => {
+Todo.find({_createdid : req.user._id}).then((doc)=> {
   res.send({doc});
 }, (e) => {
   res.status(400).send(e);
@@ -46,7 +48,7 @@ Todo.find().then((doc)=> {
 
 //Todo exress route get by id
 //getting documents by id in todo collection
-app.get('/todos/:id' ,(req,res)=> {
+app.get('/todos/:id' ,authenticate ,(req,res)=> {
   // var test = req.params.id;
   // console.log("your id is",test);
 
@@ -54,8 +56,12 @@ var getid = req.params.id;
 console.log('id is',getid);
   // res.send(req.params);
   // console.log(req.params.id);
-  Todo.findById(getid).then((doc)=> {
+  Todo.findOne({
+  _id : getid,
+_createdid : req.user._id
+}).then((doc)=> {
     if(!doc) {
+
       console.log("document not found");
     }
   res.send({doc});
@@ -63,6 +69,7 @@ console.log('id is',getid);
 res.status(404).send();
   })
 });
+
 
 console.log("hi out");
 
@@ -91,15 +98,19 @@ res.status(404).send();
 
 
 //Todo delete express route
-app.delete('/todos/delete/:todoid' ,(req,res)=> {
+app.delete('/todos/delete/:todoid' ,authenticate ,(req,res)=> {
   // var test = req.params.id;
   // console.log("your id is",test);
+
 console.log("hey inside delete!!");
 var getid = req.params.todoid;
 console.log('id is',getid);
   // res.send(req.params);
   // console.log(req.params.id);
-  Todo.findByIdAndRemove(getid).then((doc) => {
+  Todo.findOneAndRemove({
+    _id : getid,
+    _createdid : req.user._id
+  }).then((doc) => {
 if(!doc) {
   console.log('document doesnot exist');
 }
@@ -110,7 +121,7 @@ return  console.log('deletd document' , doc);
 });
 
 //express route for update query
-app.patch('/todos/update/:id' , (req,res)=> {
+app.patch('/todos/update/:id' , authenticate,(req,res)=> {
   console.log("inside update method");
 var getid = req.params.id;
 var body = _.pick(req.body,['text','completed']);
@@ -125,7 +136,7 @@ else {
   body.completedAt = null;
 }
 
-Todo.findByIdAndUpdate(getid , {$set : body} , {new : true}).then((doc)=> {
+Todo.findOneAndUpdate({_id : getid, _createdid : req.user._id} , {$set : body} , {new : true}).then((doc)=> {
 if(!doc) {
   return res.status(404).send();
 }
@@ -156,8 +167,9 @@ user.save().then((user) => {
   //res.send(user);
 }).then((token) => {
 res.header('x-auth' ,token).send(user);
-}),((e) => {
+}).catch((e) => {
   res.status(400).send(e);
+  console.log(e);
 });
 });
 
@@ -166,9 +178,9 @@ res.header('x-auth' ,token).send(user);
 app.get('/users' , (req,res)=> {
 User.find().then((doc) => {
 res.send(doc);
-} , (e) => {
+}).catch((e) => {
   res.status(400).send(e);
-} );
+})
 });
 
 //express private route get
@@ -176,10 +188,39 @@ app.get('/users/me' , authenticate , (req,res)=> {
   res.send(req.user);
 });
 
+//login users
+app.post('/users/login' , (req,res) => {
+var  body   = _.pick(req.body , ['email' , 'password']);
 
+return user.generateAuthToken().then((token) => {
+  res.header('x-auth' ,token).send(user);
+})
+User.findByCredentials(body.email,body.password).then((user)=> {
+res.send(user);
+}).catch((e) => {
+  console.log(e);
+})
+
+
+// var generatedpassword = "$2a$10$Z9DrNkEPA5LFdcVi/1D6YuXIEzbO4Z98xBwI7h9WiDFbbgmsVKEua";
+// //verifying the hashing function..resturns true if both match
+// bcrypt.compare(plain, generatedpassword, function(err, res) {
+//     // res == true
+// console.log(res);
+// });
+
+} );
+
+app.delete('users/me/delete' ,authenticate,(req,res) => {
+user.removeTokenn(req.token).then((token) => {
+  res.status(200).send();
+}).catch((e) => {
+  res.status(400).send(e);
+});
+});
 
 app.listen(port,() => {
-  console.log('Serve is rnning on port' , port);
+  console.log(`Serve is rnning on port ${port}`);
 });
 
 module.exports = {app};

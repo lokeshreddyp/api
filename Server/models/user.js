@@ -50,13 +50,24 @@ UserSchema.methods.toJSON = function() {
 UserSchema.methods.generateAuthToken = function() {
   var user = this;
   var access = 'auth';
-  var token = jwt.sign({_id : user._id.toHexString() , access} , 'abc123').toString();
+  var token = jwt.sign({_id : user._id.toHexString() , access} , process.env.JWT_SECRET).toString();
   user.tokens.push({access , token});
   return user.save().then(() => {
     return token;
   });
 };
 
+
+UserSchema.methods.removeTokenn = function(passedtoken) {
+  var user = this;
+  return user.update ({
+    $pull : {
+      tokens : {
+        token : passedtoken
+      }
+    }
+  })
+}
 //for model methods .statics is used
 UserSchema.statics.findByToken = function(token) {
   var User = this;
@@ -76,6 +87,29 @@ return Promise.reject();
   })
 }
 
+
+UserSchema.statics.findByCredentials = function(email,password) {
+var User  = this;
+
+return User.findOne({email}).then((user) => {
+  if(!user) {
+    return Promise.reject();
+  }
+
+  //bcrypt dont use promises so we promise like this
+  return new Promise((resolve,reject) => {
+    bcrypt.compare(password, user.password, (err, res) =>{
+        // res == true
+    if(res) {
+     resolve(user);
+     }
+    else {
+    reject();
+    }
+    });
+  });
+})
+}
 //before adding to db we need to hash the password
 UserSchema.pre('save', function(next) {
   // do stuff
@@ -87,13 +121,12 @@ UserSchema.pre('save', function(next) {
         bcrypt.hash(user.password, salt, (err, hash) => {
             // Store hash in your password DB.
             user.password = hash;
-
             next();
         });
     });
   }
   else {
-//  next();
+ next();
   }
 });
 
